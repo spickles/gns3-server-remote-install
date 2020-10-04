@@ -238,6 +238,7 @@ EOFI
 
 chown root:root /etc/init/gns3.conf
 chmod 644 /etc/init/gns3.conf
+fi
 
 log "GNS3 installed with success"
 
