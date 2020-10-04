@@ -191,7 +191,6 @@ log "Add gns3 to the kvm group"
 usermod -aG kvm gns3
 
 log "Setup GNS3 server"
-
 mkdir -p /etc/gns3
 cat <<EOFC > /etc/gns3/gns3_server.conf
 [Server]
