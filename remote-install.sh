@@ -130,7 +130,6 @@ then
 ###### Ubuntu Main Repos
 deb http://archive.ubuntu.com/ubuntu/ $UBUNTU_CODENAME main universe multiverse 
 deb-src http://archive.ubuntu.com/ubuntu/ $UBUNTU_CODENAME main universe multiverse 
-
 ###### Ubuntu Update Repos
 deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME}-security main universe multiverse 
 deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME}-updates main universe multiverse 
@@ -191,6 +190,7 @@ log "Add gns3 to the kvm group"
 usermod -aG kvm gns3
 
 log "Setup GNS3 server"
+
 mkdir -p /etc/gns3
 cat <<EOFC > /etc/gns3/gns3_server.conf
 [Server]
@@ -201,7 +201,6 @@ projects_path = /opt/gns3/projects
 appliances_path = /opt/gns3/appliances
 configs_path = /opt/gns3/configs
 report_errors = True
-
 [Qemu]
 enable_kvm = True
 require_kvm = True
@@ -210,27 +209,23 @@ EOFC
 chown -R gns3:gns3 /etc/gns3
 chmod -R 700 /etc/gns3
 
+/*
 if [ "$UBUNTU_CODENAME" == "trusty" ]
 then
 cat <<EOFI > /etc/init/gns3.conf
 description "GNS3 server"
 author      "GNS3 Team"
-
 start on filesystem or runlevel [2345]
 stop on runlevel [016]
 respawn
 console log
-
-
 script
     exec start-stop-daemon --start --make-pidfile --pidfile /var/run/gns3.pid --chuid gns3 --exec "/usr/bin/gns3server"
 end script
-
 pre-start script
     echo "" > /var/log/upstart/gns3.log
     echo "[`date`] GNS3 Starting"
 end script
-
 pre-stop script
     echo "[`date`] GNS3 Stopping"
 end script
@@ -238,7 +233,45 @@ EOFI
 
 chown root:root /etc/init/gns3.conf
 chmod 644 /etc/init/gns3.conf
+
+
+log "Start GNS3 service"
+set +e
+service gns3 stop
+set -e
+service gns3 start
+
+else
+    # Install systemd service
+    cat <<EOFI > /lib/systemd/system/gns3.service
+[Unit]
+Description=GNS3 server
+After=network-online.target
+Wants=network-online.target
+Conflicts=shutdown.target
+[Service]
+User=gns3
+Group=gns3
+PermissionsStartOnly=true
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStartPre=/bin/mkdir -p /var/log/gns3 /var/run/gns3
+ExecStartPre=/bin/chown -R gns3:gns3 /var/log/gns3 /var/run/gns3
+ExecStart=/usr/bin/gns3server --log /var/log/gns3/gns3.log
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=16384
+[Install]
+WantedBy=multi-user.target
+EOFI
+    chmod 755 /lib/systemd/system/gns3.service
+    chown root:root /lib/systemd/system/gns3.service
+
+    log "Start GNS3 service"
+    systemctl enable gns3
+    systemctl start gns3
 fi
+*/
 
 log "GNS3 installed with success"
 
@@ -253,7 +286,6 @@ port = 3080
 images_path = /opt/gns3/images
 projects_path = /opt/gns3/projects
 report_errors = True
-
 [Qemu]
 enable_kvm = True
 require_kvm = True
