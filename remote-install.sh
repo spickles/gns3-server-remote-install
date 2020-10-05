@@ -191,6 +191,7 @@ usermod -aG kvm gns3
 
 log "Setup GNS3 server"
 
+log "Create gns3_server.conf"
 mkdir -p /etc/gns3
 cat <<EOFC > /etc/gns3/gns3_server.conf
 [Server]
@@ -206,9 +207,11 @@ enable_kvm = True
 require_kvm = True
 EOFC
 
+log "chown gns3"
 chown -R gns3:gns3 /etc/gns3
 chmod -R 700 /etc/gns3
 
+log "Comment block BEGIN"
 /*
 if [ "$UBUNTU_CODENAME" == "trusty" ]
 then
@@ -272,6 +275,7 @@ EOFI
     systemctl start gns3
 fi
 */
+log "Comment block END"
 
 log "GNS3 installed with success"
 
